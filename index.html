@@ -3,336 +3,279 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simple Alarm Clock</title>
+  <title>Alarm Clock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:      #f7f7f5;
-      --surface: #ffffff;
-      --border:  #e5e5e2;
-      --text:    #1a1a1a;
-      --muted:   #888;
-      --accent:  #3a6df0;
-      --danger:  #e54b4b;
-      --radius:  12px;
+      --bg:        #0a0e0a;
+      --panel:     #0f150f;
+      --border:    #2a3d2a;
+      --amber:     #ffb300;
+      --amber-dim: #7a5500;
+      --green:     #1a8a1a;
+      --green-dim: #0d3d0d;
+      --red:       #e53935;
+      --white:     #f0f0e8;
+      --muted:     #4a5e4a;
+      --glow: 0 0 8px #ffb30088, 0 0 20px #ffb30044;
+      --glow-red: 0 0 8px #e5393588, 0 0 20px #e5393544;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-image:
+        radial-gradient(ellipse at 50% 0%, #1a2e1a 0%, transparent 65%),
+        repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,.015) 40px, rgba(255,255,255,.015) 41px),
+        repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,.015) 40px, rgba(255,255,255,.015) 41px);
+      color: var(--white);
+      font-family: 'Oswald', sans-serif;
       min-height: 100vh;
       padding: 32px 16px 64px;
     }
 
-    .wrap {
-      max-width: 560px;
-      margin: 0 auto;
+    .wrap { max-width: 640px; margin: 0 auto; }
+
+    .scoreboard-header { text-align: center; margin-bottom: 24px; }
+    .scoreboard-title { font-size: 13px; letter-spacing: 6px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .scoreboard-name  { font-size: 28px; letter-spacing: 8px; color: var(--amber); text-shadow: var(--glow); text-transform: uppercase; }
+
+    .panel {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 24px rgba(0,0,0,.7), 0 0 0 1px rgba(255,179,0,.06);
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(0,0,0,.08) 3px, rgba(0,0,0,.08) 4px);
+      pointer-events: none;
     }
 
-    h1 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 24px;
-      color: var(--text);
-    }
-
-    /* ── Clock ── */
-    .clock-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 36px 20px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    .clock-panel { padding: 28px 20px 20px; text-align: center; }
+    .clock-label { font-size: 11px; letter-spacing: 5px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
 
     #clock-display {
-      font-size: clamp(52px, 14vw, 80px);
-      font-weight: 700;
-      letter-spacing: -2px;
-      font-variant-numeric: tabular-nums;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(56px, 16vw, 88px);
+      letter-spacing: 4px;
+      color: var(--amber);
+      text-shadow: var(--glow);
       line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
 
-    #clock-date {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 10px;
-    }
+    #clock-date { font-size: 13px; letter-spacing: 3px; color: var(--muted); margin-top: 10px; text-transform: uppercase; }
 
-    /* ── Add form ── */
-    .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 20px;
-    }
+    .dot-row { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-dim); border: 1px solid var(--border); transition: background .1s, box-shadow .1s; }
+    .dot.on { background: var(--green); box-shadow: 0 0 6px #1a8a1a88; }
 
-    .form-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .form-panel { padding: 16px 20px; }
+    .form-label-row { font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+    .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    input[type="time"],
-    input[type="text"] {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text);
+    input[type="time"], input[type="text"] {
       background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--amber);
       outline: none;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
+      letter-spacing: 2px;
     }
-
-    input[type="time"] { width: 130px; }
-    input[type="text"] { flex: 1; min-width: 120px; }
-
-    input:focus { border-color: var(--accent); }
+    input[type="time"] { font-family: 'Share Tech Mono', monospace; width: 138px; }
+    input[type="text"]  { font-family: 'Oswald', sans-serif; flex: 1; min-width: 120px; color: var(--white); letter-spacing: 1px; }
+    input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,179,0,.15); }
+    input::placeholder { color: var(--muted); }
 
     .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 9px 18px;
-      font-size: 14px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: opacity .15s;
+      border: none; border-radius: 3px; padding: 10px 20px;
+      font-size: 13px; font-family: 'Oswald', sans-serif; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+      transition: opacity .15s, box-shadow .15s;
     }
-    .btn:active { opacity: .75; }
-    .btn-primary { background: var(--accent); color: #fff; }
+    .btn:hover { opacity: .85; }
+    .btn:active { opacity: .65; }
+    .btn-add     { background: var(--green); color: #fff; box-shadow: 0 0 12px rgba(26,138,26,.4); }
+    .btn-dismiss { background: var(--red); color: #fff; font-size: 15px; padding: 12px 36px; box-shadow: var(--glow-red); letter-spacing: 4px; }
 
-    /* ── Alarm list ── */
-    #alarm-list { display: flex; flex-direction: column; gap: 8px; }
+    .alarms-label { font-size: 11px; letter-spacing: 5px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; padding: 0 2px; }
+    #alarm-list { display: flex; flex-direction: column; gap: 6px; }
 
     .alarm-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: opacity .2s;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+      position: relative; overflow: hidden; transition: opacity .2s, border-color .2s;
     }
-
-    .alarm-item.off { opacity: .45; }
+    .alarm-item::after {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--amber); box-shadow: var(--glow); transition: opacity .2s;
+    }
+    .alarm-item.off::after { opacity: 0; }
+    .alarm-item.off { opacity: .35; }
 
     .alarm-time {
-      font-size: 22px;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      min-width: 72px;
+      font-family: 'Share Tech Mono', monospace; font-size: 26px;
+      color: var(--amber); text-shadow: var(--glow);
+      font-variant-numeric: tabular-nums; min-width: 78px; letter-spacing: 2px;
     }
+    .alarm-item.off .alarm-time { color: var(--amber-dim); text-shadow: none; }
+    .alarm-label { flex: 1; font-size: 14px; letter-spacing: 2px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
 
-    .alarm-label {
-      flex: 1;
-      font-size: 14px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Toggle switch */
     .toggle { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-track {
-      position: absolute;
-      inset: 0;
-      background: var(--border);
-      border-radius: 22px;
-      transition: background .2s;
-    }
-    .toggle input:checked ~ .toggle-track { background: var(--accent); }
-    .toggle-thumb {
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 16px; height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform .2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    }
-    .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); }
+    .toggle-track { position: absolute; inset: 0; background: var(--green-dim); border: 1px solid var(--border); border-radius: 2px; transition: background .2s, border-color .2s; }
+    .toggle input:checked ~ .toggle-track { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(26,138,26,.5); }
+    .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: var(--muted); border-radius: 1px; transition: transform .2s, background .2s; }
+    .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); background: #fff; }
 
-    /* Delete button */
     .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 4px;
-      border-radius: 6px;
-      line-height: 1;
-      opacity: .5;
-      transition: opacity .15s, background .15s;
-      flex-shrink: 0;
+      background: none; border: 1px solid transparent; cursor: pointer;
+      font-size: 14px; padding: 5px 8px; border-radius: 3px; line-height: 1;
+      color: var(--muted); font-family: 'Oswald', sans-serif; letter-spacing: 1px;
+      transition: color .15s, border-color .15s; flex-shrink: 0;
     }
-    .icon-btn:hover { opacity: 1; background: #fee2e2; }
+    .icon-btn:hover { color: var(--red); border-color: var(--red); }
 
-    /* Empty state */
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-      padding: 32px 0;
-    }
+    .empty { text-align: center; color: var(--muted); font-size: 12px; letter-spacing: 4px; padding: 28px 0; text-transform: uppercase; }
 
-    /* ── Alarm overlay ── */
-    .alarm-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.6);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-    .alarm-overlay.ringing { display: flex; animation: fadeIn .25s ease; }
+    .alarm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 200; align-items: center; justify-content: center; }
+    .alarm-overlay.ringing { display: flex; animation: fadeIn .3s ease; }
 
     .alarm-modal {
-      background: var(--surface);
-      border-radius: 18px;
-      padding: 40px 36px;
-      text-align: center;
-      box-shadow: 0 24px 80px rgba(0,0,0,.25);
-      animation: popIn .3s cubic-bezier(.34,1.56,.64,1);
+      background: var(--panel); border: 2px solid var(--amber); border-radius: 4px;
+      padding: 48px 48px 40px; text-align: center;
+      box-shadow: var(--glow), 0 32px 80px rgba(0,0,0,.8);
+      animation: popIn .35s cubic-bezier(.34,1.56,.64,1); position: relative; overflow: hidden;
+    }
+    .alarm-modal::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(0,0,0,.1) 3px, rgba(0,0,0,.1) 4px);
+      pointer-events: none;
     }
 
-    .alarm-bell { font-size: 56px; line-height: 1; margin-bottom: 12px; }
-    #overlay-label { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
-    #overlay-time { font-size: 16px; color: var(--muted); margin-bottom: 24px; font-variant-numeric: tabular-nums; }
+    .alarm-bell { font-size: 52px; line-height: 1; margin-bottom: 16px; animation: bellShake .4s ease infinite alternate; }
+    #overlay-label { font-size: 24px; letter-spacing: 6px; color: var(--amber); text-shadow: var(--glow); text-transform: uppercase; margin-bottom: 6px; }
+    #overlay-time  { font-family: 'Share Tech Mono', monospace; font-size: 48px; color: var(--amber); text-shadow: var(--glow); font-variant-numeric: tabular-nums; letter-spacing: 4px; margin-bottom: 28px; }
 
-    /* ── Toast ── */
+    .panel-bolts { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+    .bolt { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #2a3a2a; border: 1px solid var(--border); }
+    .bolt.tl { top: 7px; left: 8px; } .bolt.tr { top: 7px; right: 8px; }
+    .bolt.bl { bottom: 7px; left: 8px; } .bolt.br { bottom: 7px; right: 8px; }
+
     #toast {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: #333;
-      color: #fff;
-      padding: 9px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s, transform .2s;
-      white-space: nowrap;
-      z-index: 300;
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #1a2a1a; border: 1px solid var(--border); color: var(--amber);
+      padding: 9px 20px; border-radius: 3px; font-size: 12px; letter-spacing: 3px;
+      text-transform: uppercase; opacity: 0; pointer-events: none;
+      transition: opacity .2s, transform .2s; white-space: nowrap; z-index: 300;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes popIn   { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn    { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes bellShake { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>⏰ Alarm Clock</h1>
-
-    <!-- Clock -->
-    <div class="clock-card">
-      <div id="clock-display">00:00:00</div>
-      <div id="clock-date"></div>
+    <div class="scoreboard-header">
+      <div class="scoreboard-title">Stadium Alarm</div>
+      <div class="scoreboard-name">⚾ Scoreboard</div>
     </div>
 
-    <!-- Add alarm form -->
-    <div class="form-card">
-      <div class="form-row">
-        <input type="time" id="inp-time" />
-        <input type="text" id="inp-label" placeholder="Label (optional)" maxlength="40" />
-        <button class="btn btn-primary" id="btn-add">Add</button>
+    <div class="panel clock-panel">
+      <div class="panel-bolts">
+        <div class="bolt tl"></div><div class="bolt tr"></div>
+        <div class="bolt bl"></div><div class="bolt br"></div>
+      </div>
+      <div class="clock-label">Current Time</div>
+      <div id="clock-display">00:00:00</div>
+      <div id="clock-date"></div>
+      <div class="dot-row" id="dot-row">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
     </div>
 
-    <!-- Alarm list -->
+    <div class="panel form-panel">
+      <div class="panel-bolts">
+        <div class="bolt tl"></div><div class="bolt tr"></div>
+        <div class="bolt bl"></div><div class="bolt br"></div>
+      </div>
+      <div class="form-label-row">Set Alarm</div>
+      <div class="form-row">
+        <input type="time" id="inp-time" />
+        <input type="text" id="inp-label" placeholder="Label" maxlength="40" />
+        <button class="btn btn-add" id="btn-add">Add</button>
+      </div>
+    </div>
+
+    <div class="alarms-label">Scheduled Alarms</div>
     <div id="alarm-list"></div>
   </div>
 
-  <!-- Ringing overlay -->
   <div class="alarm-overlay" id="alarm-overlay">
     <div class="alarm-modal">
       <div class="alarm-bell">🔔</div>
       <div id="overlay-label">Alarm</div>
       <div id="overlay-time">00:00</div>
-      <button class="btn btn-primary" id="btn-dismiss">Dismiss</button>
+      <button class="btn btn-dismiss" id="btn-dismiss">Dismiss</button>
     </div>
   </div>
 
-  <!-- Toast -->
   <div id="toast"></div>
 
   <script>
     const STORE_KEY = 'alarms_v1';
-    let alarms = [];
-    let currentlyRinging = null;
-    let lastMinute = null;
-    let audioCtx = null;
-    let beepTimer = null;
+    let alarms = [], currentlyRinging = null, lastMinute = null, audioCtx = null, beepTimer = null;
 
-    function save() {
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(alarms)); } catch {}
-    }
-
-    function load() {
-      try {
-        const raw = localStorage.getItem(STORE_KEY);
-        alarms = raw ? JSON.parse(raw) : [];
-      } catch { alarms = []; }
-    }
-
-    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-    function esc(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
+    function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(alarms)); } catch {} }
+    function load() { try { const r = localStorage.getItem(STORE_KEY); alarms = r ? JSON.parse(r) : []; } catch { alarms = []; } }
+    function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     let toastTimer;
     function showToast(msg) {
       const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
+      el.textContent = msg; el.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
     }
 
     function render() {
       const el = document.getElementById('alarm-list');
-      if (!alarms.length) {
-        el.innerHTML = '<p class="empty">No alarms set yet.</p>';
-        return;
-      }
+      if (!alarms.length) { el.innerHTML = '<p class="empty">— No alarms scheduled —</p>'; return; }
       el.innerHTML = alarms.map(a => `
-        <div class="alarm-item ${a.enabled ? '' : 'off'}" data-id="${esc(a.id)}">
+        <div class="alarm-item ${a.enabled ? '' : 'off'}">
           <div class="alarm-time">${esc(a.time)}</div>
-          <div class="alarm-label">${a.label ? esc(a.label) : '<em style="opacity:.5">No label</em>'}</div>
-          <label class="toggle" title="${a.enabled ? 'Disable' : 'Enable'}">
+          <div class="alarm-label">${a.label ? esc(a.label) : '—'}</div>
+          <label class="toggle" title="${a.enabled ? 'Off' : 'On'}">
             <input type="checkbox" ${a.enabled ? 'checked' : ''} onchange="toggleAlarm('${esc(a.id)}')" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>
-          <button class="icon-btn" onclick="deleteAlarm('${esc(a.id)}')" title="Delete">🗑</button>
+          <button class="icon-btn" onclick="deleteAlarm('${esc(a.id)}')">DEL</button>
         </div>
       `).join('');
     }
 
     function addAlarm() {
-      const time  = document.getElementById('inp-time').value;
+      const time = document.getElementById('inp-time').value;
       const label = document.getElementById('inp-label').value.trim();
-      if (!time) { showToast('Please pick a time first.'); return; }
-      if (alarms.some(a => a.time === time && a.enabled)) {
-        showToast(`An alarm at ${time} already exists.`); return;
-      }
+      if (!time) { showToast('Pick a time first'); return; }
+      if (alarms.some(a => a.time === time && a.enabled)) { showToast(`Alarm at ${time} exists`); return; }
       alarms.push({ id: uid(), time, label, enabled: true });
       alarms.sort((a, b) => a.time.localeCompare(b.time));
       save(); render();
@@ -341,32 +284,24 @@
       requestNotifPermission();
     }
 
-    function toggleAlarm(id) {
-      const a = alarms.find(x => x.id === id);
-      if (a) { a.enabled = !a.enabled; save(); render(); }
-    }
+    function toggleAlarm(id) { const a = alarms.find(x => x.id === id); if (a) { a.enabled = !a.enabled; save(); render(); } }
+    function deleteAlarm(id) { alarms = alarms.filter(x => x.id !== id); save(); render(); }
 
-    function deleteAlarm(id) {
-      alarms = alarms.filter(x => x.id !== id);
-      save(); render();
+    function updateDots(sec) {
+      document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('on', i === sec % 9));
     }
 
     function tick() {
       const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const ss = String(now.getSeconds()).padStart(2,'0');
       document.getElementById('clock-display').textContent = `${hh}:${mm}:${ss}`;
-      document.getElementById('clock-date').textContent = now.toLocaleDateString(
-        undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-      );
-
+      document.getElementById('clock-date').textContent =
+        now.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' }).toUpperCase();
+      updateDots(now.getSeconds());
       const minute = `${hh}:${mm}`;
-      if (minute !== lastMinute) {
-        lastMinute = minute;
-        if (!currentlyRinging) checkAlarms(minute);
-      }
+      if (minute !== lastMinute) { lastMinute = minute; if (!currentlyRinging) checkAlarms(minute); }
     }
 
     function checkAlarms(minute) {
@@ -376,86 +311,50 @@
       document.getElementById('overlay-label').textContent = match.label || 'Alarm';
       document.getElementById('overlay-time').textContent  = match.time;
       document.getElementById('alarm-overlay').classList.add('ringing');
-      startBeep();
-      sendNotif(match);
+      startBeep(); sendNotif(match);
     }
 
     function dismissAlarm() {
       document.getElementById('alarm-overlay').classList.remove('ringing');
-      stopBeep();
-      currentlyRinging = null;
+      stopBeep(); currentlyRinging = null;
     }
 
-    function getCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      return audioCtx;
-    }
+    function getCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
 
     function playBeep() {
       try {
-        const ctx  = getCtx();
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.4, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-
-        const osc2  = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1108, ctx.currentTime + 0.15);
-        gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-        osc2.start(ctx.currentTime + 0.15);
-        osc2.stop(ctx.currentTime + 0.55);
+        const ctx = getCtx();
+        [[880,0,0.5],[1108,0.15,0.55]].forEach(([freq,start,stop]) => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+          gain.gain.setValueAtTime(start === 0 ? 0.4 : 0.3, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + stop);
+          osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + stop);
+        });
       } catch {}
     }
 
-    function startBeep() {
-      playBeep();
-      beepTimer = setInterval(playBeep, 1200);
-    }
-
-    function stopBeep() {
-      clearInterval(beepTimer);
-      beepTimer = null;
-    }
+    function startBeep() { playBeep(); beepTimer = setInterval(playBeep, 1200); }
+    function stopBeep()  { clearInterval(beepTimer); beepTimer = null; }
 
     async function requestNotifPermission() {
       if (!('Notification' in window) || Notification.permission !== 'default') return;
       await Notification.requestPermission();
     }
-
     function sendNotif(alarm) {
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
-      new Notification('⏰ ' + (alarm.label || 'Alarm'), {
-        body: `Your alarm for ${alarm.time} is ringing!`,
-        silent: true,
-      });
+      new Notification('⏰ ' + (alarm.label || 'Alarm'), { body: `Your alarm for ${alarm.time} is ringing!`, silent: true });
     }
 
-    load();
-    render();
-    tick();
+    load(); render(); tick();
     setInterval(tick, 1000);
-
     document.addEventListener('click', () => { try { getCtx(); } catch {} }, { once: true });
-
     document.getElementById('btn-add').addEventListener('click', addAlarm);
     document.getElementById('btn-dismiss').addEventListener('click', dismissAlarm);
-
-    document.getElementById('inp-label').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btn-add').click();
-    });
-    document.getElementById('inp-time').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btn-add').click();
+    ['inp-label','inp-time'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-add').click(); });
     });
   </script>
 </body>
